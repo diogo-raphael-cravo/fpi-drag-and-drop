@@ -19,6 +19,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JTabbedPane;
 
 import eventoProgresso.EventoProgresso;
 import eventoProgresso.EventoProgressoListener;
@@ -27,17 +28,13 @@ import Imagem.Imagem;
 
 public class JanelaInicial extends JFrame
 	implements ActionListener, EventoProgressoListener{
+	private static final long serialVersionUID = 1L;
 //dados
 	//---- Constantes
-	private static final long serialVersionUID = 1L;
-	private static final int COMPRIMENTO_JANELA = 1000;
-	private static final int LARGURA_JANELA = 800;
-	private static final int COMPRIMENTO_PANEL_BOTOES = (COMPRIMENTO_JANELA-30)/6;
-	private static final int LARGURA_PANEL_BOTOES = (LARGURA_JANELA-30)/6;
 	private final JFileChooser painelEscolhaArquivo;
 	
 	//---- Interface
-	private PainelImagem painelImagens;
+	private JTabbedPane paineisImagens; 
 	
 	private JMenuItem carregar;
 	private JMenuItem salvar;
@@ -58,11 +55,9 @@ public class JanelaInicial extends JFrame
 		//janelas
 		painelEscolhaArquivo = new JFileChooser();
 		
-		painelImagens = new PainelImagem();
-		painelImagens.setSize(COMPRIMENTO_PANEL_BOTOES, LARGURA_PANEL_BOTOES);
-		
-		getContentPane().add( painelImagens );
-		//getContentPane().setLayout(new GridLayout(1,2));
+		paineisImagens = new JTabbedPane();
+
+		getContentPane().add( paineisImagens );
 		
     	//menu
 		JMenuBar barraMenu = new JMenuBar();
@@ -139,6 +134,13 @@ public class JanelaInicial extends JFrame
 	
 	//---- Action Listener
 	public void actionPerformed(ActionEvent e) {
+		if(e.getSource().getClass() == JMenuItem.class){
+			acoesMenu(e);
+		}
+		
+		
+	}
+	private void acoesMenu(ActionEvent e){
 		JMenuItem source = (JMenuItem)(e.getSource());
 		if(source.getText() == "Carregar imagem"){
 			acaoBtnCarregar();
@@ -149,34 +151,36 @@ public class JanelaInicial extends JFrame
 		else if(source.getText() == "Sair"){
 			dispose();
 		}
-		
 	}
 
 	//---- Interface
 	public void exibir(){
 		setVisible(true);
 	}
-	public void adicionarImagem(Imagem _imgEntrada){
+	public void adicionarImagem(String _nomePainel, Imagem _imgEntrada){
+		PainelImagem painelImagem = new PainelImagem();
+		painelImagem.adicionarImagem(_imgEntrada);
+		
 		criarBarraProgresso();
 		
 		atualizarBarraProgresso(0);
-		painelImagens.adicionarImagem(_imgEntrada);
+		paineisImagens.add(_nomePainel, painelImagem);
 		fecharBarraProgresso();
-		
-		getContentPane().add( painelImagens );
 	}
 	
 	//---- Botões
 	private void acaoBtnCarregar(){
 		int opcaoUsuario = painelEscolhaArquivo.showOpenDialog(JanelaInicial.this);
 		Imagem imgEntrada = new Imagem();
+		String[] nomeImagem;
 		
         if (opcaoUsuario == JFileChooser.APPROVE_OPTION) {
             File file = painelEscolhaArquivo.getSelectedFile();
             
             try{
             	imgEntrada.lerDoCaminho(file.getPath());
-				adicionarImagem(imgEntrada);
+            	nomeImagem = file.getPath().split(System.getProperty("file.separator"));
+				adicionarImagem(nomeImagem[nomeImagem.length-1], imgEntrada);
 			} catch(IOException _excecaoEntrada){
 				JOptionPane.showMessageDialog(null, _excecaoEntrada.getMessage());
 			}
@@ -188,7 +192,7 @@ public class JanelaInicial extends JFrame
         if (opcaoUsuario == JFileChooser.APPROVE_OPTION) {
             File file = painelEscolhaArquivo.getSelectedFile();
             
-            if(painelImagens.salvarEmJPGComCaminho(file.getPath())){
+            if(((PainelImagem) paineisImagens.getSelectedComponent()).salvarEmJPGComCaminho(file.getPath())){
             	JOptionPane.showMessageDialog(null, "Imagem Salva com sucesso!");
 			}
 			else{
@@ -241,7 +245,7 @@ public class JanelaInicial extends JFrame
 		desabilitarBotoes();
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
        
-	    painelImagens.registrarListener(this);
+        //((PainelImagem) paineisImagens.getSelectedComponent()).registrarListener(this);
 	    atualizarBarraProgresso(0);
 	}
 	private void fecharBarraProgresso(){
