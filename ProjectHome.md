@@ -1,0 +1,1 @@
+A user friendly program to compose parts of an image to another one.
